@@ -26,29 +26,29 @@ type AIConfig = {
   url?: string;
   apiKey?: string;
   systemPrompt: string;
+  model?: String;
 };
 
 type AIProviderFunction = (textoDaVaga: string, config: AIConfig) => Promise<string>;
 
 const processarComOllama: AIProviderFunction = async (textoDaVaga, config) => {
   const urlLocal = config.url || 'http://127.0.0.1:11434/api/generate';
+  const model = config.model || 'llama3';
   const promptCompleto = `${config.systemPrompt}\n\n--- TEXTO DA VAGA ---\n${textoDaVaga}`;
   
   try {
-    console.log(`[Ollama Debug] 1. Tentando conectar na URL:`, urlLocal);
-    console.log(`[Ollama Debug] 2. Tamanho do texto enviado:`, textoDaVaga.length, "caracteres");
-
     const resposta = await fetch(urlLocal, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'llama3', 
+        model: model, 
         prompt: promptCompleto,
-        stream: false 
+        stream: false, 
+        options: {
+          num_predict: 2048 
+        }
       })
     });
-
-    console.log(`[Ollama Debug] 3. Status HTTP recebido:`, resposta.status);
 
     if (!resposta.ok) {
       const erroServidor = await resposta.text();
@@ -57,7 +57,6 @@ const processarComOllama: AIProviderFunction = async (textoDaVaga, config) => {
     }
 
     const json = await resposta.json();
-    console.log(`[Ollama Debug] 4. Sucesso! Resposta JSON recebida.`);
     return json.response;
 
   } catch (err: any) {
@@ -91,13 +90,14 @@ const roteadorIA: Record<string, AIProviderFunction> = {
 };
 
 async function processarComIA(textoDaVaga: string) {
-  const dados = await chrome.storage.sync.get(['provider', 'url', 'apiKey', 'systemPrompt']);
+  const dados = await chrome.storage.sync.get(['provider', 'url', 'apiKey', 'systemPrompt', 'model']);
   
   const config: AIConfig = {
     provider: (dados.provider as string) || 'ollama',
     url: dados.url as string,
     apiKey: dados.apiKey as string,
-    systemPrompt: (dados.systemPrompt as string) || 'Extraia os dados em JSON.'
+    systemPrompt: (dados.systemPrompt as string) || 'Extraia os dados em JSON.',
+    model: (dados.model as String) || 'llama3'
   };
 
   const executarChamadaIA = roteadorIA[config.provider];

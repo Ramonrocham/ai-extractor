@@ -143,7 +143,7 @@ function App() {
         <div className="bg-white p-3 rounded-md border border-slate-200 shadow-sm text-sm">
           <span className="font-semibold text-slate-700">Status: </span>
           {status === 'idle' && <span className="text-slate-500">Pronto para ler a página</span>}
-          {status === 'loading' && <span className="text-blue-600 animate-pulse">Processando... Pode fechar a janela.</span>}
+          {status === 'loading' && <span className="text-blue-600 animate-pulse">Processando...</span>}
           {status === 'success' && <span className="text-green-600 font-medium">Extração concluída!</span>}
         </div>
 
@@ -178,7 +178,7 @@ function App() {
             <textarea 
               readOnly
               value={respostaIA}
-              placeholder={status === 'loading' ? 'A IA está gerando o relatório... Pode fechar esta aba enquanto aguarda.' : 'O resultado formatado aparecerá aqui...'}
+              placeholder={status === 'loading' ? 'A IA está gerando o relatório...' : 'O resultado formatado aparecerá aqui...'}
               className={`w-full h-40 p-2 text-sm font-mono bg-white border rounded resize-none focus:outline-none shadow-inner
                 ${status === 'loading' ? 'border-blue-300 animate-pulse' : 'border-slate-300 text-slate-800'}`}
             />

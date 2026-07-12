@@ -28,6 +28,7 @@ function Options() {
   const [apiKey, setApiKey] = useState('');
   const [systemPrompt, setSystemPrompt] = useState(PROMPT_PADRAO);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [model, setModel] = useState('llama3');
 
   useEffect(() => {
     chrome.storage.sync.get(['provider', 'url', 'apiKey', 'systemPrompt'], (dados) => {
@@ -35,6 +36,7 @@ function Options() {
       if (dados.url) setUrl(dados.url as string);
       if (dados.apiKey) setApiKey(dados.apiKey as string);
       if (dados.systemPrompt) setSystemPrompt(dados.systemPrompt as string);
+      if (dados.model) setModel(dados.model as string);
     });
   }, []);
 
@@ -45,7 +47,8 @@ function Options() {
       provider,
       url,
       apiKey,
-      systemPrompt
+      systemPrompt,
+      model
     }, () => {
       setStatus('saved');
       setTimeout(() => setStatus('idle'), 3000);
@@ -92,6 +95,18 @@ function Options() {
                 placeholder={provider === 'ollama' ? "http://localhost:11434/api/generate" : "https://api.openai.com/v1/chat/completions"}
                 className="p-2 border border-slate-300 rounded bg-slate-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono text-sm"
               />
+              {(provider === 'ollama') &&
+              <div>
+                <label className="font-semibold text-slate-700">
+                  Nome do Modelo (ex: qwen3.5:latest):
+                </label>
+                <input 
+                  type="text" 
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  className="border p-2 rounded w-full"
+                />
+              </div>}
             </div>
           )}
 
