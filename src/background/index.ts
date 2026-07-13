@@ -27,27 +27,35 @@ type AIConfig = {
   apiKey?: string;
   systemPrompt: string;
   model?: String;
+  numCtx: number;
+  numPredict: number;
+  temperature: number;
 };
 
 type AIProviderFunction = (textoDaVaga: string, config: AIConfig) => Promise<string>;
 
 const processarComOllama: AIProviderFunction = async (textoDaVaga, config) => {
-  const urlLocal = config.url || 'http://127.0.0.1:11434/api/generate';
+  const urlLocal = config.url || 'http://127.0.0.1:11434/api/chat';
   const model = config.model || 'llama3';
-  const promptCompleto = `${config.systemPrompt}\n\n--- TEXTO DA VAGA ---\n${textoDaVaga}`;
   
   try {
     const resposta = await fetch(urlLocal, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: model, 
-        prompt: promptCompleto,
-        stream: false, 
+        model: model,
+        messages: [
+          { role: 'system', content: config.systemPrompt },
+          { role: 'user', content: textoDaVaga },
+        ],
+        stream: false,
+        format: "json",
         options: {
-          num_predict: 2048 
-        }
-      })
+          num_ctx: config.numCtx,
+          num_predict: config.numPredict,
+          temperature: config.temperature,
+        },
+      }),
     });
 
     if (!resposta.ok) {
@@ -57,7 +65,7 @@ const processarComOllama: AIProviderFunction = async (textoDaVaga, config) => {
     }
 
     const json = await resposta.json();
-    return json.response;
+    return json.message.content;
 
   } catch (err: any) {
     console.error(`[Ollama Debug] EXCEÇÃO FATAL NO FETCH:`, err);
@@ -90,14 +98,17 @@ const roteadorIA: Record<string, AIProviderFunction> = {
 };
 
 async function processarComIA(textoDaVaga: string) {
-  const dados = await chrome.storage.sync.get(['provider', 'url', 'apiKey', 'systemPrompt', 'model']);
+  const dados = await chrome.storage.local.get(['provider', 'url', 'apiKey', 'systemPrompt', 'model', 'numCtx', 'numPredict', 'temperature']);
   
   const config: AIConfig = {
     provider: (dados.provider as string) || 'ollama',
     url: dados.url as string,
     apiKey: dados.apiKey as string,
     systemPrompt: (dados.systemPrompt as string) || 'Extraia os dados em JSON.',
-    model: (dados.model as String) || 'llama3'
+    model: (dados.model as String) || 'llama3',
+    numCtx: Number(dados.numCtx) || 4096, 
+    numPredict: Number(dados.numPredict) || 2048, 
+    temperature: Number(dados.temperature) || 0.1
   };
 
   const executarChamadaIA = roteadorIA[config.provider];

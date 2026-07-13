@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { PROMPT_PADRAO } from './propmt';
 
-const PROMPT_PADRAO = `You are an expert Technical Recruiter and AI Data Extractor. Your task is to analyze unstructured web text from a job description and extract precise data.
+const PROMPT_PADRAO_ANTIGO = `You are an expert Technical Recruiter and AI Data Extractor. Your task is to analyze unstructured web text from a job description and extract precise data.
 
 CRITICAL RULES:
 1. ONLY return a valid JSON object. No Markdown, no introductions.
@@ -29,26 +30,36 @@ function Options() {
   const [systemPrompt, setSystemPrompt] = useState(PROMPT_PADRAO);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [model, setModel] = useState('llama3');
-
+  const [numCtx, setNumCtx] = useState(4096);
+  const [numPredict, setNumPredict] = useState(2048);
+  const [temperature, setTemperature] = useState(0.1);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  console.log(systemPrompt);
   useEffect(() => {
-    chrome.storage.sync.get(['provider', 'url', 'apiKey', 'systemPrompt'], (dados) => {
+    chrome.storage.local.get(['provider', 'url', 'apiKey','model', 'systemPrompt', 'numCtx', 'numPredict', 'temperature'], (dados) => {
       if (dados.provider) setProvider(dados.provider as string);
       if (dados.url) setUrl(dados.url as string);
       if (dados.apiKey) setApiKey(dados.apiKey as string);
       if (dados.systemPrompt) setSystemPrompt(dados.systemPrompt as string);
       if (dados.model) setModel(dados.model as string);
+      if (dados.numCtx) setNumCtx(dados.numCtx as number);
+      if (dados.numPredict) setNumPredict(dados.numPredict as number);
+      if (dados.temperature) setTemperature(dados.temperature as number);
     });
   }, []);
 
   const handleSave = () => {
     setStatus('saving');
     
-    chrome.storage.sync.set({
+    chrome.storage.local.set({
       provider,
       url,
       apiKey,
       systemPrompt,
-      model
+      model,
+      numCtx,
+      numPredict,
+      temperature
     }, () => {
       setStatus('saved');
       setTimeout(() => setStatus('idle'), 3000);
@@ -106,6 +117,54 @@ function Options() {
                   onChange={(e) => setModel(e.target.value)}
                   className="border p-2 rounded w-full"
                 />
+                <button 
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="text-blue-500 text-sm mt-4 hover:underline"
+                >
+                {showAdvanced ? "Ocultar Configurações Avançadas" : "Mostrar Configurações Avançadas"}
+                </button>
+                {showAdvanced && (
+                <div className="mt-4 p-4 border rounded bg-gray-50 space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">
+                      Context Window (num_ctx) - RAM
+                    </label>
+                    <input 
+                      type="number" 
+                      value={numCtx} 
+                      step="1024"
+                      onChange={(e) => setNumCtx(Number(e.target.value))} 
+                      className="w-full border rounded p-1 text-sm mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">
+                      Max Tokens (num_predict) - Resposta
+                    </label>
+                    <input 
+                      type="number" 
+                      value={numPredict} 
+                      step="512"
+                      onChange={(e) => setNumPredict(Number(e.target.value))} 
+                      className="w-full border rounded p-1 text-sm mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">
+                      Temperatura (Criatividade)
+                    </label>
+                    <input 
+                      type="number" 
+                      value={temperature} 
+                      step="0.1" 
+                      min="0" 
+                      max="2"
+                      onChange={(e) => setTemperature(Number(e.target.value))} 
+                      className="w-full border rounded p-1 text-sm mt-1"
+                    />
+                  </div>
+                </div>
+              )}
               </div>}
             </div>
           )}
