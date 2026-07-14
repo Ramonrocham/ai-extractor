@@ -26,7 +26,7 @@ type AIConfig = {
   url?: string;
   apiKey?: string;
   systemPrompt: string;
-  model?: String;
+  model?: string;
   numCtx: number;
   numPredict: number;
   temperature: number;
@@ -73,42 +73,145 @@ const processarComOllama: AIProviderFunction = async (textoDaVaga, config) => {
   }
 };
 
+/**
+ * Provider: Chrome AI integrada (Gemini Nano on-device via Prompt API).
+ */
 const processarComChrome: AIProviderFunction = async (textoDaVaga, config) => {
-  const promptCompleto = `${config.systemPrompt}\n\n--- TEXTO DA VAGA ---\n${textoDaVaga}`;
-  
   try {
-    const aiAPI = (globalThis as any).ai;
-    if (!aiAPI || !aiAPI.languageModel) {
-      throw new Error("API nativa do Chrome não encontrada. As flags estão ativas?");
+    const LanguageModelAPI = (globalThis as any).LanguageModel;
+    if (!LanguageModelAPI) {
+      throw new Error("API nativa do Chrome (LanguageModel) não encontrada. As flags estão ativas?");
     }
 
-    const session = await aiAPI.languageModel.create();
-    const resposta = await session.prompt(promptCompleto);
+    const session = await LanguageModelAPI.create({
+      initialPrompts: [{ role: 'system', content: config.systemPrompt }],
+    });
+
+    const resposta = await session.prompt(textoDaVaga);
     session.destroy();
-    
+
     return resposta;
   } catch (err: any) {
     throw new Error(`Falha no Chrome AI: ${err.message}`);
   }
 };
 
+/**
+ * Provider: ChatGPT (OpenAI Chat Completions API).
+ */
+const processarComChatGPT: AIProviderFunction = async (textoDaVaga, config) => {
+  if (!config.apiKey) {
+    throw new Error("API key não configurada para o ChatGPT.");
+  }
+
+  const url = config.url || 'https://api.openai.com/v1/chat/completions';
+  const model = config.model || 'gpt-4o-mini';
+
+  try {
+    const resposta = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: config.systemPrompt },
+          { role: 'user', content: textoDaVaga },
+        ],
+        temperature: config.temperature,
+        max_tokens: config.numPredict || 2048,
+        response_format: { type: 'json_object' },
+      }),
+    });
+
+    if (!resposta.ok) {
+      const erroServidor = await resposta.text();
+      console.error(`[ChatGPT Debug] Erro do Servidor:`, erroServidor);
+      throw new Error(`Erro ${resposta.status} no servidor: ${erroServidor}`);
+    }
+
+    const json = await resposta.json();
+    const content = json.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('Resposta da API não contém choices[0].message.content.');
+    }
+    return content;
+  } catch (err: any) {
+    console.error(`[ChatGPT Debug] EXCEÇÃO FATAL NO FETCH:`, err);
+    throw new Error(`Detalhe do erro: ${err.message || 'Erro desconhecido'}`);
+  }
+};
+
+/**
+ * Provider: Claude (Anthropic Messages API).
+ */
+const processarComClaude: AIProviderFunction = async (textoDaVaga, config) => {
+  if (!config.apiKey) {
+    throw new Error("API key não configurada para o Claude.");
+  }
+
+  const url = config.url || 'https://api.anthropic.com/v1/messages';
+  const model = config.model || 'claude-haiku-4-5-20251001';
+
+  try {
+    const resposta = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: config.numPredict || 2048,
+        system: config.systemPrompt,
+        messages: [{ role: 'user', content: textoDaVaga }],
+        temperature: config.temperature,
+      }),
+    });
+
+    if (!resposta.ok) {
+      const erroServidor = await resposta.text();
+      console.error(`[Claude Debug] Erro do Servidor:`, erroServidor);
+      throw new Error(`Erro ${resposta.status} no servidor: ${erroServidor}`);
+    }
+
+    const json = await resposta.json();
+    const textBlock = (json.content as any[])?.find((b) => b.type === 'text');
+    if (!textBlock) {
+      throw new Error('Resposta da API Claude não contém bloco de texto.');
+    }
+    return textBlock.text;
+  } catch (err: any) {
+    console.error(`[Claude Debug] EXCEÇÃO FATAL NO FETCH:`, err);
+    throw new Error(`Detalhe do erro: ${err.message || 'Erro desconhecido'}`);
+  }
+};
+
 const roteadorIA: Record<string, AIProviderFunction> = {
   ollama: processarComOllama,
   chrome: processarComChrome,
+  chatgpt: processarComChatGPT,
+  claude: processarComClaude,
 };
 
 async function processarComIA(textoDaVaga: string) {
-  const dados = await chrome.storage.local.get(['provider', 'url', 'apiKey', 'systemPrompt', 'model', 'numCtx', 'numPredict', 'temperature']);
+  const dados = await chrome.storage.local.get([
+    'provider', 'url', 'apiKey', 'systemPrompt', 'model',
+    'numCtx', 'numPredict', 'temperature',
+  ]);
   
   const config: AIConfig = {
     provider: (dados.provider as string) || 'ollama',
     url: dados.url as string,
     apiKey: dados.apiKey as string,
     systemPrompt: (dados.systemPrompt as string) || 'Extraia os dados em JSON.',
-    model: (dados.model as String) || 'llama3',
-    numCtx: Number(dados.numCtx) || 4096, 
+    model: (dados.model as string) || 'llama3',
+    numCtx: Number(dados.numCtx) || 8192,
     numPredict: Number(dados.numPredict) || 2048, 
-    temperature: Number(dados.temperature) || 0.1
+    temperature: Number(dados.temperature) || 0.1,
   };
 
   const executarChamadaIA = roteadorIA[config.provider];
