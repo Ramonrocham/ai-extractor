@@ -12,7 +12,7 @@ O grande diferencial deste projeto é a sua **arquitetura de cliente LLM agnóst
 > 
 > 
 
-## 🛠 Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 * **Frontend:** React, TypeScript e Tailwind CSS.
 
@@ -45,7 +45,7 @@ Acesse a página de Opções da extensão clicando com o botão direito no ícon
 A opção perfeita para quem quer processar dados sem enviar informações para a nuvem.
 
 * **Pré-requisito:** Ter o [Ollama](https://ollama.com/) instalado e rodando na máquina.
-* **URL do Endpoint:** `[http://127.0.0.1:11434/api/chat](http://127.0.0.1:11434/api/chat)` (Obrigatório e preenchido por padrão).
+* **URL do Endpoint:** `http://127.0.0.1:11434/api/chat` (Obrigatório e preenchido por padrão).
 
 
 * **Nome do Modelo:** Digite o nome do modelo que você baixou (ex: `llama3`, `qwen2.5:3b`).
@@ -96,7 +96,7 @@ Utiliza o modelo integrado diretamente no motor do Google Chrome (através da AP
 
 ---
 
-## 🧠 Configurações Avançadas e System Prompt
+## Configurações Avançadas e System Prompt
 
 A aba de configurações permite gerenciar parâmetros refinados do motor de inferência:
 
@@ -111,3 +111,18 @@ A aba de configurações permite gerenciar parâmetros refinados do motor de inf
 
 
 A extensão também conta com um editor de **System Prompt** embutido, permitindo que as regras de extração (como as heurísticas de JSON estrito) sejam testadas e atualizadas diretamente na interface, persistindo os dados no `chrome.storage.local`.
+
+---
+
+## Como Instalar
+
+Como a extensão ainda não está publicada na Chrome Web Store, a instalação é feita manualmente em poucos passos:
+
+1. Vá até a página de [Releases](../../releases) deste repositório (ou clique em "Releases" na barra lateral direita).
+2. Baixe o arquivo `.zip` da versão mais recente (ex: `ai-job-extractor-vX.X.X.zip`).
+3. Extraia o conteúdo do arquivo `.zip` em uma pasta no seu computador.
+4. Abra o Google Chrome e acesse a página de extensões digitando `chrome://extensions/` na barra de endereços.
+5. No canto superior direito, ative a opção **"Modo do desenvolvedor"** (Developer mode).
+6. Clique no botão **"Carregar sem compactação"** (Load unpacked) que aparecerá no canto superior esquerdo.
+7. Selecione a pasta que você extraiu no passo 3.
+8. Pronto! O ícone da extensão já deve aparecer no seu navegador.
