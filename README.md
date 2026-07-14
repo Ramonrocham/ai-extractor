@@ -1,32 +1,113 @@
-# React + TypeScript + Vite
+# AI Extractor Extension
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Um extrator de dados de vagas de emprego estruturado via Inteligência Artificial, construído como uma extensão para o Google Chrome.
 
-Currently, two official plugins are available:
+## Sobre o Projeto (Escopo)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+O **AI Extractor** nasceu com o objetivo de capturar textos desestruturados e ruidosos de páginas de vagas de emprego (como LinkedIn e Gupy) e convertê-los em um objeto JSON estrito e padronizado.
 
-## React Compiler
+O grande diferencial deste projeto é a sua **arquitetura de cliente LLM agnóstico**. Em vez de ficar preso a um único provedor de IA, a extensão possui um roteador inteligente (`roteadorIA`) que permite ao usuário escolher entre rodar modelos localmente (garantindo privacidade e custo zero) ou utilizar as APIs mais poderosas do mercado na nuvem.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+> **Aviso de Portfólio:** Este é um projeto de cunho educacional e de portfólio. Foi desenvolvido para explorar a integração de Extensões de Navegador com APIs de *Large Language Models* (LLMs), manipulação de estados complexos em React e arquitetura de software focada no princípio Open/Closed (fácil de estender para novos provedores, sem modificar o núcleo).
+> 
+> 
 
-## Expanding the Oxlint configuration
+## 🛠 Tecnologias Utilizadas
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+* **Frontend:** React, TypeScript e Tailwind CSS.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+* **Armazenamento:** `chrome.storage.local` para lidar de forma segura com grandes volumes de dados e evitar limites.
+
+
+* **Integração de IA:**
+* Ollama (Local SLMs/LLMs)
+
+
+* OpenAI API (ChatGPT)
+
+
+* Anthropic API (Claude)
+
+
+* Chrome Built-in AI (Gemini Nano *on-device*)
+
+
+
+---
+
+## Como Configurar os Provedores de IA
+
+Acesse a página de Opções da extensão clicando com o botão direito no ícone dela e selecionando **"Opções"**. A interface permite configurar os seguintes provedores:
+
+### 1. Ollama (Servidor Local)
+
+A opção perfeita para quem quer processar dados sem enviar informações para a nuvem.
+
+* **Pré-requisito:** Ter o [Ollama](https://ollama.com/) instalado e rodando na máquina.
+* **URL do Endpoint:** `[http://127.0.0.1:11434/api/chat](http://127.0.0.1:11434/api/chat)` (Obrigatório e preenchido por padrão).
+
+
+* **Nome do Modelo:** Digite o nome do modelo que você baixou (ex: `llama3`, `qwen2.5:3b`).
+
+
+* **Avançado:** Recomenda-se manter o `num_ctx` em `8192` para evitar que o modelo perca contexto, e `temperature` em `0.1` para forçar a IA a respeitar a formatação JSON passado pelo prompt.
+
+
+
+### 2. ChatGPT (OpenAI)
+
+Para utilizar os modelos de ponta da OpenAI, garantindo um JSON perfeito nativamente (`response_format: { type: 'json_object' }`).
+
+* **API Key:** Obrigatório. Insira sua chave `sk-...` gerada no painel da OpenAI.
+
+
+* **Nome do Modelo:** Padrão sugerido é o `gpt-4o-mini` (rápido e de baixo custo).
+
+
+* **URL do Endpoint:** Deixe em branco para usar o endpoint oficial. Só preencha se estiver usando um *proxy* ou uma infraestrutura compatível, como o Azure OpenAI.
+
+
+
+### 3. Claude (Anthropic)
+
+Utiliza a API de *Messages* da Anthropic.
+
+* **API Key:** Obrigatório. Insira sua chave `sk-ant-...`.
+
+
+* **Nome do Modelo:** Padrão sugerido é o `claude-haiku-4-5-20251001`.
+
+
+* **URL do Endpoint:** Deixe em branco, a menos que utilize um *proxy*.
+
+
+
+### 4. Chrome Built-in AI (Gemini Nano)
+
+Utiliza o modelo integrado diretamente no motor do Google Chrome (através da API experimental `LanguageModel`), processando o texto diretamente no navegador do usuário, sem necessidade de servidores externos.
+
+* **Atenção:** Esta é uma funcionalidade experimental. A janela de contexto é limitada (~4K tokens). Se as extrações falharem com vagas muito longas, ajuste o *System Prompt* na interface para uma versão mais enxuta.
+
+
+* **Pré-requisito:** Necessário ativar as *flags* experimentais de IA no seu navegador Chrome.
+
+
+
+---
+
+## 🧠 Configurações Avançadas e System Prompt
+
+A aba de configurações permite gerenciar parâmetros refinados do motor de inferência:
+
+* **Context Window (`num_ctx`):** Define a "mesa de trabalho" da IA em memória RAM. Crucial para rodar o Ollama sem quebrar prompts grandes.
+
+
+* **Max Tokens (`num_predict`):** O limite de palavras geradas na resposta (Padrão: 2048).
+
+
+* **Temperatura:** Controle de "criatividade". Mantido em 0.1 para priorizar o raciocínio lógico e determinístico ao montar o JSON.
+
+
+
+A extensão também conta com um editor de **System Prompt** embutido, permitindo que as regras de extração (como as heurísticas de JSON estrito) sejam testadas e atualizadas diretamente na interface, persistindo os dados no `chrome.storage.local`.
