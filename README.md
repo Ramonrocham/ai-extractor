@@ -4,9 +4,9 @@ Um extrator de dados de vagas de emprego estruturado via Inteligência Artificia
 
 ## Sobre o Projeto (Escopo)
 
-O **AI Extractor** nasceu com o objetivo de capturar textos desestruturados e ruidosos de páginas de vagas de emprego (como LinkedIn e Gupy) e convertê-los em um objeto JSON estrito e padronizado.
+O **AI Extractor** nasceu com o objetivo de capturar textos desestruturados de páginas de vagas de emprego (como LinkedIn e Gupy) e convertê-los em um objeto JSON estrito e padronizado.
 
-O grande diferencial deste projeto é a sua **arquitetura de cliente LLM agnóstico**. Em vez de ficar preso a um único provedor de IA, a extensão possui um roteador inteligente (`roteadorIA`) que permite ao usuário escolher entre rodar modelos localmente (garantindo privacidade e custo zero) ou utilizar as APIs mais poderosas do mercado na nuvem.
+O grande diferencial deste projeto é a sua **arquitetura de cliente LLM**. Em vez de ficar preso a um único provedor de IA, a extensão possui um roteador inteligente (`roteadorIA`) que permite ao usuário escolher entre rodar modelos localmente (garantindo privacidade e custo zero) ou utilizar as APIs mais poderosas do mercado na nuvem.
 
 > **Aviso de Portfólio:** Este é um projeto de cunho educacional e de portfólio. Foi desenvolvido para explorar a integração de Extensões de Navegador com APIs de *Large Language Models* (LLMs), manipulação de estados complexos em React e arquitetura de software focada no princípio Open/Closed (fácil de estender para novos provedores, sem modificar o núcleo).
 > 
@@ -17,7 +17,7 @@ O grande diferencial deste projeto é a sua **arquitetura de cliente LLM agnóst
 * **Frontend:** React, TypeScript e Tailwind CSS.
 
 
-* **Armazenamento:** `chrome.storage.local` para lidar de forma segura com grandes volumes de dados e evitar limites.
+* **Armazenamento:** `chrome.storage.local` para lidar com grandes volumes de dados e evitar limites.
 
 
 * **Integração de IA:**
@@ -45,7 +45,7 @@ Acesse a página de Opções da extensão clicando com o botão direito no ícon
 A opção perfeita para quem quer processar dados sem enviar informações para a nuvem.
 
 * **Pré-requisito:** Ter o [Ollama](https://ollama.com/) instalado e rodando na máquina.
-* **URL do Endpoint:** `http://127.0.0.1:11434/api/chat` (Obrigatório e preenchido por padrão).
+* **URL do Endpoint:** `http://127.0.0.1:11434/api/chat` (Obrigatório).
 
 
 * **Nome do Modelo:** Digite o nome do modelo que você baixou (ex: `llama3`, `qwen2.5:3b`).
@@ -119,7 +119,7 @@ A extensão também conta com um editor de **System Prompt** embutido, permitind
 Como a extensão ainda não está publicada na Chrome Web Store, a instalação é feita manualmente em poucos passos:
 
 1. Vá até a página de [Releases](../../releases) deste repositório (ou clique em "Releases" na barra lateral direita).
-2. Baixe o arquivo `.zip` da versão mais recente (ex: `ai-job-extractor-vX.X.X.zip`).
+2. Baixe o arquivo `.zip` da versão mais recente (ex: `ai-extractor-vX.X.X.zip`).
 3. Extraia o conteúdo do arquivo `.zip` em uma pasta no seu computador.
 4. Abra o Google Chrome e acesse a página de extensões digitando `chrome://extensions/` na barra de endereços.
 5. No canto superior direito, ative a opção **"Modo do desenvolvedor"** (Developer mode).
