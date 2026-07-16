@@ -6,14 +6,16 @@ function App() {
   const [respostaIA, setRespostaIA] = useState('');
   const [copiado, setCopiado] = useState(false);
   const [provider, setProvider] = useState('');
+  const [model, setModel] = useState('');
 
   useEffect(() => {
-    chrome.storage.local.get(['statusExtracao', 'resultadoIA', 'erroIA', 'textoBruto', 'provider'], (data: { 
+    chrome.storage.local.get(['statusExtracao', 'resultadoIA', 'erroIA', 'textoBruto', 'provider', 'model'], (data: { 
   statusExtracao?: string; 
   resultadoIA?: string; 
   erroIA?: string; 
   textoBruto?: string
-  provider?:string 
+  provider?:string
+  model?:string 
 })=> {
       if (data.textoBruto) setTextoExtraido(data.textoBruto);
 
@@ -27,6 +29,7 @@ function App() {
         setStatus('idle');
       }
       if(data.provider) setProvider(data.provider);
+      if(data.model) setModel(data.model);
     });
 
     const listener = (changes: { [key: string]: chrome.storage.StorageChange }, namespace: string) => {
@@ -173,7 +176,7 @@ function App() {
           <div className="flex flex-col gap-1">
             <div className="flex justify-between items-end">
               <label className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-                Recebido da IA - {provider}
+                Resultado - {provider}
               </label>
               
               {status === 'success' && (
@@ -188,7 +191,7 @@ function App() {
             <textarea 
               readOnly
               value={respostaIA}
-              placeholder={status === 'loading' ? 'A IA está gerando o relatório...' : 'O resultado formatado aparecerá aqui...'}
+              placeholder={status === 'loading' ? `${model == '' ? 'A IA' : model } está gerando o relatório...` : 'O resultado formatado aparecerá aqui...'}
               className={`w-full h-40 p-2 text-sm font-mono bg-white border rounded resize-none focus:outline-none shadow-inner
                 ${status === 'loading' ? 'border-blue-300 animate-pulse' : 'border-slate-300 text-slate-800'}`}
             />
@@ -213,7 +216,7 @@ function App() {
             </svg>
           )}
           
-          {status === 'idle' && 'Extrair e Estruturar'}
+          {status === 'idle' && 'Extrair'}
           {status === 'loading' && 'Analisando...'}
           {status === 'success' && 'Nova Extração'}
         </button>
