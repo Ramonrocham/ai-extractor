@@ -113,7 +113,14 @@ function App() {
       chrome.runtime.sendMessage({ 
         action: "PROCESS_WITH_AI", 
         text: texto 
-      });
+      }, () => {
+      if (chrome.runtime.lastError) {
+      console.error("Falha ao contatar o Service Worker:", chrome.runtime.lastError);
+      setStatus('idle');
+      setRespostaIA(`Erro crítico: O Service Worker não respondeu. Tente recarregar a extensão.`);
+      chrome.storage.local.set({ statusExtracao: 'erro', erroIA: "Service Worker Inativo" });
+    }
+  });
 
     } catch (error: any) {
       console.error(error);
