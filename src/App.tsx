@@ -60,6 +60,28 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (status !== 'loading') return;
+
+    const intervalo = setInterval(() => {
+      chrome.storage.local.get(['statusExtracao', 'resultadoIA', 'erroIA'], (data: {
+        statusExtracao?: string;
+        resultadoIA?: string;
+        erroIA?: string;
+      }) => {
+        if (data.statusExtracao === 'concluido' && data.resultadoIA) {
+          setRespostaIA(data.resultadoIA);
+          setStatus('success');
+        } else if (data.statusExtracao === 'erro') {
+          setRespostaIA(`Erro: ${data.erroIA || 'Desconhecido'}`);
+          setStatus('idle');
+        }
+      });
+    }, 10000);
+
+    return () => clearInterval(intervalo);
+  }, [status]);
+
   const copiarParaAreaDeTransferencia = async () => {
     if (!respostaIA) return;
     
@@ -116,13 +138,26 @@ function App() {
       chrome.runtime.sendMessage({ 
         action: "PROCESS_WITH_AI", 
         text: texto 
-      }, () => {
-      if (chrome.runtime.lastError) {
-      console.error("Falha ao contatar o Service Worker:", chrome.runtime.lastError);
-      setStatus('idle');
-      setRespostaIA(`Erro crítico: O Service Worker não respondeu. Tente recarregar a extensão.`);
-      chrome.storage.local.set({ statusExtracao: 'erro', erroIA: "Service Worker Inativo" });
-    }
+      }, (response) => {
+        // 1. Verifica se o Service Worker estava morto/inativo
+        if (chrome.runtime.lastError) {
+          console.error("Falha ao contatar o Service Worker:", chrome.runtime.lastError);
+          setStatus('idle');
+          setRespostaIA(`Erro crítico: O Service Worker não respondeu. Tente recarregar a extensão.`);
+          chrome.storage.local.set({ statusExtracao: 'erro', erroIA: "Service Worker Inativo" });
+          return;
+        }
+
+        // 2. Se o Background respondeu com sucesso diretamente!
+        if (response && response.result) {
+          setRespostaIA(response.result);
+          setStatus('success');
+        } 
+        // 3. Se o Background processou, mas a IA retornou erro
+        else if (response && response.error) {
+          setRespostaIA(`Erro: ${response.error}`);
+          setStatus('idle');
+        }
   });
 
     } catch (error: any) {

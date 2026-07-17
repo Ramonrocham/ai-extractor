@@ -7,6 +7,11 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
       textoBruto: request.text 
     });
 
+
+    const manterWorkerAcordado = setInterval(() => {
+      chrome.storage.local.get(['statusExtracao'], () => {});
+    }, 20000);
+
     processarComIA(request.text)
       .then(resultado => {
         chrome.storage.local.set({ statusExtracao: 'concluido', resultadoIA: resultado });
@@ -15,6 +20,9 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
       .catch(erro => {
         chrome.storage.local.set({ statusExtracao: 'erro', erroIA: erro.message });
         sendResponse({ error: erro.message });
+      })
+      .finally(() => {
+        clearInterval(manterWorkerAcordado);
       });
       
     return true; 
@@ -90,7 +98,9 @@ const processarComChrome: AIProviderFunction = async (textoDaVaga, config) => {
     const resposta = await session.prompt(textoDaVaga);
     session.destroy();
 
-    return resposta;
+    const respostaTratada = resposta.replace(/^```(?:json)?/im, '').replace(/```$/m, '').trim();
+
+    return respostaTratada;
   } catch (err: any) {
     throw new Error(`Falha no Chrome AI: ${err.message}`);
   }
